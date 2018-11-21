@@ -1,11 +1,7 @@
 package ar.edu.utn.frsf.isi.dam.laboratorio05;
 
-
-import android.Manifest;
-import android.content.pm.PackageManager;
-import android.os.Build;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -42,5 +38,11 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
     @Override
     public void onMapReady(GoogleMap map) {
         miMapa = map;
+
+        try {
+            miMapa.setMyLocationEnabled(true);
+        } catch (SecurityException e) {
+            Log.e("LAB05", e.toString());
+        }
     }
 }

@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
         NuevoReclamoFragment.OnNuevoLugarListener {
     private DrawerLayout drawerLayout;
     private NavigationView navView;
+    private boolean access_fine_location_permission = false;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
 
@@ -68,13 +69,30 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
                                 fragmentTransaction = true;
                                 break;
                             case R.id.optVerMapa:
-                                tag = "mapaReclamos";
-                                fragment = getSupportFragmentManager().findFragmentByTag(tag);
-                                if (fragment == null) {
-                                    fragment = new MapaFragment();
-                                    //((MapaFragment) fragment).setListener(this);
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                                            != PackageManager.PERMISSION_GRANTED) {
+                                        ActivityCompat.requestPermissions(
+                                                MainActivity.this,
+                                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                                LOCATION_PERMISSION_REQUEST_CODE
+                                        );
+                                    } else {
+                                        Log.d("LAB05", "permission already granted !!");
+                                        access_fine_location_permission = true;
+                                    }
                                 }
-                                fragmentTransaction = true;
+
+                                if (access_fine_location_permission) {
+                                    tag = "mapaReclamos";
+                                    fragment = getSupportFragmentManager().findFragmentByTag(tag);
+                                    if (fragment == null) {
+                                        fragment = new MapaFragment();
+                                        //((MapaFragment) fragment).setListener(this);
+                                    }
+                                    fragmentTransaction = true;
+                                }
+
                                 break;
                             case R.id.optHeatMap:
                                 //TODO HABILITAR
@@ -159,5 +177,18 @@ public class MainActivity extends AppCompatActivity implements FragmentManager.O
             // para que el usuario vea el mapa y con el click largo pueda acceder
             // a seleccionar la coordenada donde se registra el reclamo
             // configurar a la actividad como listener de los eventos del mapa ((MapaFragment) fragment).setListener(this);
+    }
+
+    @Override
+    public void onRequestPermissionsResult (int requestCode, String permission[], int[] grantResults) {
+        switch (requestCode) {
+            case LOCATION_PERMISSION_REQUEST_CODE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    access_fine_location_permission = true;
+                }
+
+                return;
+            }
+        }
     }
 }
