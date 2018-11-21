@@ -10,4 +10,11 @@
 /captures
 .externalNativeBuild
 
+# android studio
 .idea
+
+# vim
+*.swp
+
+# clave mapas
+**/clave_mapas.xml
