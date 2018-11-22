@@ -19,7 +19,10 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.TileOverlayOptions;
+import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import ar.edu.utn.frsf.isi.dam.laboratorio05.modelo.MyDatabase;
@@ -162,6 +165,51 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                                 );
 
                                 miMapa.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 10.0f));
+                            }
+                        });
+                    }
+                };
+
+                Thread t = new Thread(r);
+                t.start();
+                break;
+            }
+
+            case 4: {
+                Runnable r = new Runnable() {
+                    @Override
+                    public void run() {
+                        final List<Reclamo> reclamoList = reclamoDao.getAll();
+
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                List<LatLng> pointList = new ArrayList<>();
+                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+
+                                for (Reclamo reclamo : reclamoList) {
+                                    LatLng point = new LatLng(reclamo.getLatitud(), reclamo.getLongitud());
+
+                                    pointList.add(point);
+
+                                    builder.include(point);
+                                }
+
+                                HeatmapTileProvider mProvider = new HeatmapTileProvider.Builder()
+                                        .data(pointList)
+                                        .build();
+
+                                miMapa.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+
+                                LatLngBounds bounds = builder.build();
+
+                                int width = getResources().getDisplayMetrics().widthPixels;
+                                int height = getResources().getDisplayMetrics().heightPixels;
+                                int padding = (int) (width * 0.10);
+
+                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
+
+                                miMapa.animateCamera(cu);
                             }
                         });
                     }

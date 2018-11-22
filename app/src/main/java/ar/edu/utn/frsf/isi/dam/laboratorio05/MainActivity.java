@@ -17,10 +17,6 @@ import android.view.MenuItem;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 
-
-// AGREGAR en MapaFragment una interface MapaFragment.OnMapaListener con el método coordenadasSeleccionadas 
-// IMPLEMENTAR dicho método en esta actividad.
-
 public class MainActivity extends AppCompatActivity implements
         FragmentManager.OnBackStackChangedListener,
         NuevoReclamoFragment.OnNuevoLugarListener,
@@ -103,12 +99,35 @@ public class MainActivity extends AppCompatActivity implements
 
                                 break;
                             case R.id.optHeatMap:
-                                //TODO HABILITAR
-                                //tag="mapaReclamos";
-                                //fragment =  getSupportFragmentManager().findFragmentByTag(tag);
-                                //TODO si "fragment" es null entonces crear el fragmento mapa, agregar un bundel con el parametro tipo_mapa
-                                // configurar a la actividad como listener de los eventos del mapa ((MapaFragment) fragment).setListener(this);
-                               // fragmentTransaction = true;
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
+                                            != PackageManager.PERMISSION_GRANTED) {
+                                        ActivityCompat.requestPermissions(
+                                                MainActivity.this,
+                                                new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                                                LOCATION_PERMISSION_REQUEST_CODE
+                                        );
+                                    } else {
+                                        Log.d("LAB05", "permission already granted !!");
+                                        access_fine_location_permission = true;
+                                    }
+                                }
+
+                                if (access_fine_location_permission) {
+                                    tag = "mapaReclamos";
+                                    fragment = getSupportFragmentManager().findFragmentByTag(tag);
+                                    if (fragment == null) {
+                                        fragment = new MapaFragment();
+                                        ((MapaFragment) fragment).setListener(MainActivity.this);
+                                    }
+
+                                    Bundle bundle = new Bundle();
+                                    bundle.putInt("tipo_mapa", 4);
+                                    fragment.setArguments(bundle);
+
+                                    fragmentTransaction = true;
+                                }
+
                                 break;
                         }
 
@@ -151,12 +170,6 @@ public class MainActivity extends AppCompatActivity implements
         boolean canback = getSupportFragmentManager().getBackStackEntryCount()>0;
         getSupportActionBar().setDisplayHomeAsUpEnabled(canback);
     }
-
-    // AGREGAR en MapaFragment una interface OnMapaListener con el método coordenadasSeleccionadas
-    // IMPLEMENTAR dicho método en esta actividad.
-    // el objetivo de este método, es simplmente invocar al fragmento "nuevoReclamoFragment"
-    // pasando como argumento el objeto "LatLng" elegido por el usuario en el click largo
-    // como ubicación del reclamo
 
     @Override
     public void coordenadasSeleccionadas(LatLng c) {
