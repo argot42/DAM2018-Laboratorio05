@@ -81,7 +81,9 @@ public class ListaReclamosFragment extends Fragment {
         public void mostrarMapa(int id) {
             Fragment f = new MapaFragment();// setear el fragmento del mapa
             Bundle args = new Bundle();
-            // setear los parametros tipo_mapa y idReclamo en el Bundle args
+            args.putInt("idReclamo", id);
+            args.putInt("tipo_mapa", 3);
+
             f.setArguments(args);
             getActivity().getSupportFragmentManager()
                     .beginTransaction()
