@@ -1,6 +1,7 @@
 package ar.edu.utn.frsf.isi.dam.laboratorio05;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -13,6 +14,8 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -28,6 +31,8 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
     private GoogleMap miMapa;
     private OnMapaListener mapaListener;
     private int tipoMapa;
+    private int idReclamo;
+
     private ReclamoDao reclamoDao;
 
     public MapaFragment() {}
@@ -53,9 +58,11 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
         View rootView = super.onCreateView(inflater, container, savedInstaceState);
 
         tipoMapa = 0;
+        idReclamo = -1;
         Bundle argumentos = getArguments();
         if (argumentos != null) {
             tipoMapa = argumentos.getInt("tipo_mapa", 0);
+            idReclamo = argumentos.getInt("idReclamo", -1);
         }
 
         reclamoDao = MyDatabase.getInstance(this.getActivity()).getReclamoDao();
@@ -77,7 +84,7 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
         }
 
         switch(tipoMapa) {
-            case 1:
+            case 1: {
                 miMapa.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
                     @Override
                     public void onMapLongClick(LatLng latLng) {
@@ -85,8 +92,9 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                     }
                 });
                 break;
+            }
 
-            case 2:
+            case 2: {
                 Runnable r = new Runnable() {
                     @Override
                     public void run() {
@@ -126,6 +134,43 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                 Thread t = new Thread(r);
                 t.start();
                 break;
+            }
+
+            case 3: {
+                Runnable r = new Runnable() {
+                    @Override
+                    public void run() {
+                        final Reclamo reclamo = reclamoDao.getById(idReclamo);
+
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                LatLng point = new LatLng(reclamo.getLatitud(), reclamo.getLongitud());
+
+                                miMapa.addMarker(new MarkerOptions()
+                                        .position(point)
+                                        .title(reclamo.getReclamo())
+                                        .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                                );
+
+                                miMapa.addCircle(new CircleOptions()
+                                        .center(point)
+                                        .radius(500)
+                                        .strokeColor(Color.RED)
+                                        .fillColor(0x22ff000d)
+                                        .strokeWidth(5)
+                                );
+
+                                miMapa.moveCamera(CameraUpdateFactory.newLatLngZoom(point, 10.0f));
+                            }
+                        });
+                    }
+                };
+
+                Thread t = new Thread(r);
+                t.start();
+                break;
+            }
         }
 
     }
