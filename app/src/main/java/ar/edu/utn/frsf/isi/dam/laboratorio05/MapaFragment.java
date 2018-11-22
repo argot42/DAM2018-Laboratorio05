@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.PolylineOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 import com.google.maps.android.heatmaps.HeatmapTileProvider;
 
@@ -35,6 +36,7 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
     private OnMapaListener mapaListener;
     private int tipoMapa;
     private int idReclamo;
+    private String tipoReclamo;
 
     private ReclamoDao reclamoDao;
 
@@ -62,10 +64,12 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
 
         tipoMapa = 0;
         idReclamo = -1;
+        tipoReclamo = null;
         Bundle argumentos = getArguments();
         if (argumentos != null) {
             tipoMapa = argumentos.getInt("tipo_mapa", 0);
             idReclamo = argumentos.getInt("idReclamo", -1);
+            tipoReclamo = argumentos.getString("tipo_reclamo", null);
         }
 
         reclamoDao = MyDatabase.getInstance(this.getActivity()).getReclamoDao();
@@ -102,6 +106,8 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                     @Override
                     public void run() {
                         final List<Reclamo> listaReclamos = reclamoDao.getAll();
+
+                        if (listaReclamos.isEmpty()) return;
 
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
@@ -145,6 +151,8 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                     public void run() {
                         final Reclamo reclamo = reclamoDao.getById(idReclamo);
 
+                        if (reclamo == null) return;
+
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -181,6 +189,8 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                     public void run() {
                         final List<Reclamo> reclamoList = reclamoDao.getAll();
 
+                        if (reclamoList.isEmpty()) return;
+
                         getActivity().runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
@@ -200,6 +210,61 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
                                         .build();
 
                                 miMapa.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+
+                                LatLngBounds bounds = builder.build();
+
+                                int width = getResources().getDisplayMetrics().widthPixels;
+                                int height = getResources().getDisplayMetrics().heightPixels;
+                                int padding = (int) (width * 0.10);
+
+                                CameraUpdate cu = CameraUpdateFactory.newLatLngBounds(bounds, width, height, padding);
+
+                                miMapa.animateCamera(cu);
+                            }
+                        });
+                    }
+                };
+
+                Thread t = new Thread(r);
+                t.start();
+                break;
+            }
+
+            case 5: {
+                Runnable r = new Runnable() {
+                    @Override
+                    public void run() {
+                        if (tipoReclamo == null) return;
+
+                        final List<Reclamo> reclamoList = reclamoDao.getByTipo(tipoReclamo);
+
+                        if (reclamoList.isEmpty()) return;
+
+                        getActivity().runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                List<LatLng> pointList = new ArrayList<>();
+                                LatLngBounds.Builder builder = new LatLngBounds.Builder();
+
+                                for (Reclamo reclamo : reclamoList) {
+                                    LatLng point = new LatLng(reclamo.getLatitud(), reclamo.getLongitud());
+
+                                    miMapa.addMarker(new MarkerOptions()
+                                            .position(point)
+                                            .title(reclamo.getReclamo())
+                                            .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED))
+                                    );
+
+                                    pointList.add(point);
+
+                                    builder.include(point);
+                                }
+
+                                miMapa.addPolyline(new PolylineOptions()
+                                        .addAll(pointList)
+                                        .width(5)
+                                        .color(Color.RED)
+                                );
 
                                 LatLngBounds bounds = builder.build();
 
