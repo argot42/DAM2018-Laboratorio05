@@ -61,12 +61,14 @@ public class MainActivity extends AppCompatActivity implements
 
                                 fragmentTransaction = true;
                                 break;
+
                             case R.id.optListaReclamo:
                                 tag="listaReclamos";
                                 fragment =  getSupportFragmentManager().findFragmentByTag(tag);
                                 if(fragment==null) fragment = new ListaReclamosFragment();
                                 fragmentTransaction = true;
                                 break;
+
                             case R.id.optVerMapa:
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -98,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements
                                 }
 
                                 break;
+
                             case R.id.optHeatMap:
                                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
                                     if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -127,6 +130,16 @@ public class MainActivity extends AppCompatActivity implements
 
                                     fragmentTransaction = true;
                                 }
+
+                                break;
+
+                            case R.id.optFormularioBusqueda:
+                                tag = "formularioBusqueda";
+                                fragment = getSupportFragmentManager().findFragmentByTag(tag);
+                                if (fragment == null) {
+                                    fragment = new FormularioBusquedaFragment();
+                                }
+                                fragmentTransaction = true;
 
                                 break;
                         }
