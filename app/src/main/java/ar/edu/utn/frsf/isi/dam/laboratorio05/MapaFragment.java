@@ -40,10 +40,10 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstaceState) {
         View rootView = super.onCreateView(inflater, container, savedInstaceState);
 
-        tipoMapa = GoogleMap.MAP_TYPE_NORMAL;
+        tipoMapa = 0;
         Bundle argumentos = getArguments();
         if (argumentos != null) {
-            tipoMapa = argumentos.getInt("tipo_mapa", GoogleMap.MAP_TYPE_NORMAL);
+            tipoMapa = argumentos.getInt("tipo_mapa", 0);
         }
 
         getMapAsync(this);
@@ -54,19 +54,24 @@ public class MapaFragment extends SupportMapFragment implements OnMapReadyCallba
     @Override
     public void onMapReady(GoogleMap map) {
         miMapa = map;
-        miMapa.setMapType(tipoMapa);
 
         try {
             miMapa.setMyLocationEnabled(true);
         } catch (SecurityException e) {
             Log.e("LAB05", e.toString());
+            return;
         }
 
-        miMapa.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
-            @Override
-            public void onMapLongClick(LatLng latLng) {
-                mapaListener.coordenadasSeleccionadas(latLng);
-            }
-        });
+        switch(tipoMapa) {
+            case 1:
+                miMapa.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+                    @Override
+                    public void onMapLongClick(LatLng latLng) {
+                        mapaListener.coordenadasSeleccionadas(latLng);
+                    }
+                });
+                break;
+        }
+
     }
 }

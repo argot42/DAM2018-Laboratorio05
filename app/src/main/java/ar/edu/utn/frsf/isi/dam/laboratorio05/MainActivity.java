@@ -175,11 +175,6 @@ public class MainActivity extends AppCompatActivity implements
 
     @Override
     public void obtenerCoordenadas() {
-        // TODO: invocar el fragmento del mapa
-        // pasando como parametro un bundle con "tipo_mapa"
-        // para que el usuario vea el mapa y con el click largo pueda acceder
-        // a seleccionar la coordenada donde se registra el reclamo
-        // configurar a la actividad como listener de los eventos del mapa ((MapaFragment) fragment).setListener(this);
         Log.d("LAB05", "obtener coordenadas");
 
         String tag = "mapaReclamos";
@@ -190,7 +185,7 @@ public class MainActivity extends AppCompatActivity implements
         }
 
         Bundle bundle = new Bundle();
-        bundle.putInt("tipo_mapa", GoogleMap.MAP_TYPE_NORMAL);
+        bundle.putInt("tipo_mapa", 1);
         fragment.setArguments(bundle);
         getSupportFragmentManager()
                 .beginTransaction()
