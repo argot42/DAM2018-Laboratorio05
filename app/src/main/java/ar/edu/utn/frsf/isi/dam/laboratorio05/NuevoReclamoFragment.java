@@ -1,9 +1,11 @@
 package ar.edu.utn.frsf.isi.dam.laboratorio05;
 
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,6 +20,8 @@ import ar.edu.utn.frsf.isi.dam.laboratorio05.modelo.MyDatabase;
 import ar.edu.utn.frsf.isi.dam.laboratorio05.modelo.Reclamo;
 import ar.edu.utn.frsf.isi.dam.laboratorio05.modelo.ReclamoDao;
 
+import static android.app.Activity.RESULT_OK;
+
 public class NuevoReclamoFragment extends Fragment {
 
     public interface OnNuevoLugarListener {
@@ -28,6 +32,8 @@ public class NuevoReclamoFragment extends Fragment {
         this.listener = listener;
     }
 
+    static final int REQUEST_IMAGE_CAPTURE = 1;
+
     private Reclamo reclamoActual;
     private ReclamoDao reclamoDao;
 
@@ -37,6 +43,7 @@ public class NuevoReclamoFragment extends Fragment {
     private TextView tvCoord;
     private Button buscarCoord;
     private Button btnGuardar;
+    private Button btnFotoReclamo;
     private OnNuevoLugarListener listener;
 
     private ArrayAdapter<Reclamo.TipoReclamo> tipoReclamoAdapter;
@@ -48,6 +55,7 @@ public class NuevoReclamoFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         reclamoDao = MyDatabase.getInstance(this.getActivity()).getReclamoDao();
 
         View v = inflater.inflate(R.layout.fragment_nuevo_reclamo, container, false);
@@ -58,6 +66,7 @@ public class NuevoReclamoFragment extends Fragment {
         tvCoord= (TextView) v.findViewById(R.id.reclamo_coord);
         buscarCoord= (Button) v.findViewById(R.id.btnBuscarCoordenadas);
         btnGuardar= (Button) v.findViewById(R.id.btnGuardar);
+        btnFotoReclamo = (Button) v.findViewById(R.id.btnBuscarTipoReclamo);
 
         tipoReclamoAdapter = new ArrayAdapter<Reclamo.TipoReclamo>(getActivity(),android.R.layout.simple_spinner_item,Reclamo.TipoReclamo.values());
         tipoReclamoAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -84,6 +93,14 @@ public class NuevoReclamoFragment extends Fragment {
 
             }
         });
+
+        /*btnFotoReclamo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                startActivityForResult(i, REQUEST_IMAGE_CAPTURE);
+            }
+        });*/
 
         btnGuardar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -159,5 +176,10 @@ public class NuevoReclamoFragment extends Fragment {
         t1.start();
     }
 
+    /*@Override
+    public void onActivityResult (int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_IMAGE_CAPTURE && resultCode == RESULT_OK) {
 
+        }
+    }*/
 }

@@ -48,6 +48,13 @@
         android:id="@+id/reclamo_tipo"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"></Spinner>
+
+    <Button
+        android:id="@+id/btnFotoReclamo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Tomar Foto" />
+
     <Button
         android:id="@+id/btnGuardar"
         android:text="Guardar"
