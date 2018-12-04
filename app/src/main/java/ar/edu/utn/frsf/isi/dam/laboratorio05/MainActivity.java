@@ -24,8 +24,10 @@ public class MainActivity extends AppCompatActivity implements
     private DrawerLayout drawerLayout;
     private NavigationView navView;
     private boolean access_fine_location_permission = false;
+    private boolean audio_record_audio_permission = false;
 
     private static final int LOCATION_PERMISSION_REQUEST_CODE = 1;
+    private static final int AUDIO_PERMISSION_REQUEST_CODE = 2;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,14 +54,31 @@ public class MainActivity extends AppCompatActivity implements
                         String tag = "";
                         switch (menuItem.getItemId()) {
                             case R.id.optNuevoReclamo:
-                                tag = "nuevoReclamoFragment";
-                                fragment =  getSupportFragmentManager().findFragmentByTag(tag);
-                                if(fragment==null) {
-                                    fragment = new NuevoReclamoFragment();
-                                    ((NuevoReclamoFragment) fragment).setListener(MainActivity.this);
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                                    if (ContextCompat.checkSelfPermission(MainActivity.this, Manifest.permission.RECORD_AUDIO)
+                                            != PackageManager.PERMISSION_GRANTED) {
+                                        ActivityCompat.requestPermissions(
+                                                MainActivity.this,
+                                                new String[]{Manifest.permission.RECORD_AUDIO},
+                                                AUDIO_PERMISSION_REQUEST_CODE
+                                        );
+                                    } else {
+                                        Log.d("LAB06", "audio permission already granted!!");
+                                        audio_record_audio_permission = true;
+                                    }
                                 }
 
-                                fragmentTransaction = true;
+                                if (audio_record_audio_permission) {
+                                    tag = "nuevoReclamoFragment";
+                                    fragment =  getSupportFragmentManager().findFragmentByTag(tag);
+                                    if(fragment==null) {
+                                        fragment = new NuevoReclamoFragment();
+                                        ((NuevoReclamoFragment) fragment).setListener(MainActivity.this);
+                                    }
+
+                                    fragmentTransaction = true;
+                                }
+
                                 break;
 
                             case R.id.optListaReclamo:
@@ -232,7 +251,15 @@ public class MainActivity extends AppCompatActivity implements
                     access_fine_location_permission = true;
                 }
 
-                return;
+                break;
+            }
+
+            case AUDIO_PERMISSION_REQUEST_CODE: {
+                if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    audio_record_audio_permission = true;
+                }
+
+                break;
             }
         }
     }

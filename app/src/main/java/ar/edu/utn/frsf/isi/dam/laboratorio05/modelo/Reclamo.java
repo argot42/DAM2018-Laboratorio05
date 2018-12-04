@@ -19,6 +19,7 @@ public class Reclamo {
     @TypeConverters(TipoReclamoConverter.class)
     private TipoReclamo tipo;
     private String imagePath;
+    private String audioPath;
 
     public Double getLatitud() {
         return latitud;
@@ -74,5 +75,13 @@ public class Reclamo {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public String getAudioPath() {
+        return audioPath;
+    }
+
+    public void setAudioPath(String audioPath) {
+        this.audioPath = audioPath;
     }
 }
