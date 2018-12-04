@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.Image;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -56,10 +58,18 @@ public class NuevoReclamoFragment extends Fragment {
     private Button btnGuardar;
     private Button btnFotoReclamo;
     private ImageView imgFotoReclamo;
+    private Button btnAudioReclamo;
+    private Button btnEscucharAudioReclamo;
 
     private OnNuevoLugarListener listener;
 
     private String pathFoto;
+
+    private MediaRecorder mRecorder = null;
+    private boolean audioPressed = false;
+    private MediaPlayer mPlayer = null;
+    private boolean audioPlaying = false;
+    private String pathAudio;
 
     private ArrayAdapter<Reclamo.TipoReclamo> tipoReclamoAdapter;
     public NuevoReclamoFragment() {
@@ -83,6 +93,8 @@ public class NuevoReclamoFragment extends Fragment {
         btnGuardar= (Button) v.findViewById(R.id.btnGuardar);
         btnFotoReclamo = (Button) v.findViewById(R.id.btnFotoReclamo);
         imgFotoReclamo = (ImageView) v.findViewById(R.id.imgFotoReclamo);
+        btnAudioReclamo = (Button) v.findViewById(R.id.btnAudioReclamo);
+        btnEscucharAudioReclamo = (Button) v.findViewById(R.id.btnEscucharAudioReclamo);
 
         tipoReclamoAdapter = new ArrayAdapter<>(getActivity(),android.R.layout.simple_spinner_item,Reclamo.TipoReclamo.values());
         tipoReclamoAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -95,7 +107,6 @@ public class NuevoReclamoFragment extends Fragment {
 
         cargarReclamo(idReclamo);
 
-
         boolean edicionActivada = !tvCoord.getText().toString().equals("0;0");
         reclamoDesc.setEnabled(edicionActivada );
         mail.setEnabled(edicionActivada );
@@ -103,6 +114,8 @@ public class NuevoReclamoFragment extends Fragment {
         btnGuardar.setEnabled(edicionActivada);
         btnFotoReclamo.setEnabled(edicionActivada);
         imgFotoReclamo.setEnabled(edicionActivada);
+        btnAudioReclamo.setEnabled(edicionActivada);
+        btnEscucharAudioReclamo.setEnabled(edicionActivada);
 
         buscarCoord.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -139,6 +152,41 @@ public class NuevoReclamoFragment extends Fragment {
             }
         });
 
+        btnAudioReclamo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!audioPressed) {
+                    btnAudioReclamo.setText("Detener Grabación");
+                    startRecording();
+
+                } else {
+                    btnAudioReclamo.setText("Comenzar Grabación");
+                    stopRecording();
+                }
+
+                audioPressed = !audioPressed;
+            }
+        });
+
+        btnEscucharAudioReclamo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (pathAudio == null || pathAudio.equals("")) { return; }
+                if (audioPressed) { return; }
+
+                if (audioPlaying) {
+                    btnEscucharAudioReclamo.setText("Escuchar");
+                    stopPlaying();
+
+                } else {
+                    btnEscucharAudioReclamo.setText("Detener");
+                    startPlaying();
+                }
+
+                audioPlaying = !audioPlaying;
+            }
+        });
+
         btnGuardar.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -160,6 +208,19 @@ public class NuevoReclamoFragment extends Fragment {
                             mail.setText(reclamoActual.getEmail());
                             tvCoord.setText(reclamoActual.getLatitud()+";"+reclamoActual.getLongitud());
                             reclamoDesc.setText(reclamoActual.getReclamo());
+
+                            String imagepath = reclamoActual.getImagePath();
+                            if (imagepath != null && !imagepath.equals("")) {
+                                pathFoto = imagepath;
+                                Bitmap imageThumbnail = BitmapFactory.decodeFile(imagepath);
+                                imgFotoReclamo.setImageBitmap(imageThumbnail);
+                            }
+
+                            String audiopath = reclamoActual.getAudioPath();
+                            if (audiopath != null && !audiopath.equals("")) {
+                                pathAudio = audiopath;
+                            }
+
                             Reclamo.TipoReclamo[] tipos= Reclamo.TipoReclamo.values();
                             for(int i=0;i<tipos.length;i++) {
                                 if(tipos[i].equals(reclamoActual.getTipo())) {
@@ -186,6 +247,15 @@ public class NuevoReclamoFragment extends Fragment {
         reclamoActual.setEmail(mail.getText().toString());
         reclamoActual.setReclamo(reclamoDesc.getText().toString());
         reclamoActual.setTipo(tipoReclamoAdapter.getItem(tipoReclamo.getSelectedItemPosition()));
+
+        if (pathFoto != null && !pathFoto.equals("")) {
+            reclamoActual.setImagePath(pathFoto);
+        }
+
+        if (pathAudio != null && !pathAudio.equals("")) {
+            reclamoActual.setAudioPath(pathAudio);
+        }
+
         if(tvCoord.getText().toString().length()>0 && tvCoord.getText().toString().contains(";")) {
             String[] coordenadas = tvCoord.getText().toString().split(";");
             reclamoActual.setLatitud(Double.valueOf(coordenadas[0]));
@@ -205,6 +275,7 @@ public class NuevoReclamoFragment extends Fragment {
                         tvCoord.setText(R.string.texto_vacio);
                         reclamoDesc.setText(R.string.texto_vacio);
                         imgFotoReclamo.setImageResource(0);
+                        pathFoto = "";
                         getActivity().getFragmentManager().popBackStack();
                     }
                 });
@@ -229,6 +300,62 @@ public class NuevoReclamoFragment extends Fragment {
         return image;
     }
 
+    private void startRecording() {
+        mRecorder = new MediaRecorder();
+        mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+        mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
+        pathAudio = generateAudioFilename();
+        mRecorder.setOutputFile(pathAudio);
+        mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
+
+        try {
+            mRecorder.prepare();
+        } catch (IOException e) {
+            Log.e("LAB06", "prepare() failed");
+        }
+
+        mRecorder.start();
+    }
+
+    private void stopRecording() {
+        mRecorder.stop();
+        mRecorder.release();
+        mRecorder = null;
+    }
+
+    private String generateAudioFilename() {
+        String path = getActivity().getExternalCacheDir().getAbsolutePath();
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String suffix = ".3gp";
+
+        Log.d("LAB06", path + "/" + timeStamp + suffix);
+
+        return path + "/" + timeStamp + suffix;
+    }
+
+    private void startPlaying() {
+        mPlayer = new MediaPlayer();
+        try {
+            mPlayer.setDataSource(pathAudio);
+            mPlayer.prepare();
+            mPlayer.start();
+        } catch (IOException e) {
+            Log.e("LAB06", "prepare() failed");
+        }
+
+        mPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                btnEscucharAudioReclamo.setText("Escuchar");
+            }
+        });
+    }
+
+    private void stopPlaying() {
+        mPlayer.release();
+        mPlayer = null;
+    }
+
     @Override
     public void onActivityResult (int requestCode, int resultCode, Intent data) {
 
@@ -237,6 +364,20 @@ public class NuevoReclamoFragment extends Fragment {
 
             Bitmap imageThumbnail = BitmapFactory.decodeFile(pathFoto);
             imgFotoReclamo.setImageBitmap(imageThumbnail);
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        if (mRecorder != null) {
+            mRecorder.release();
+            mRecorder = null;
+        }
+
+        if (mPlayer != null) {
+            mPlayer.release();
+            mPlayer = null;
         }
     }
 }
