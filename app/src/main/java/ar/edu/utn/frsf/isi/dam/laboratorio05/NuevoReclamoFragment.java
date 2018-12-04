@@ -1,22 +1,37 @@
 package ar.edu.utn.frsf.isi.dam.laboratorio05;
 
 
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.media.Image;
+import android.net.Uri;
 import android.os.Bundle;
-import android.os.Handler;
-import android.os.Message;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.FileProvider;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import ar.edu.utn.frsf.isi.dam.laboratorio05.modelo.MyDatabase;
 import ar.edu.utn.frsf.isi.dam.laboratorio05.modelo.Reclamo;
 import ar.edu.utn.frsf.isi.dam.laboratorio05.modelo.ReclamoDao;
+
+import static android.app.Activity.RESULT_OK;
 
 public class NuevoReclamoFragment extends Fragment {
 
@@ -28,6 +43,8 @@ public class NuevoReclamoFragment extends Fragment {
         this.listener = listener;
     }
 
+    static final int REQUEST_IMAGE_SAVE = 2;
+
     private Reclamo reclamoActual;
     private ReclamoDao reclamoDao;
 
@@ -37,7 +54,12 @@ public class NuevoReclamoFragment extends Fragment {
     private TextView tvCoord;
     private Button buscarCoord;
     private Button btnGuardar;
+    private Button btnFotoReclamo;
+    private ImageView imgFotoReclamo;
+
     private OnNuevoLugarListener listener;
+
+    private String pathFoto;
 
     private ArrayAdapter<Reclamo.TipoReclamo> tipoReclamoAdapter;
     public NuevoReclamoFragment() {
@@ -48,6 +70,7 @@ public class NuevoReclamoFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+
         reclamoDao = MyDatabase.getInstance(this.getActivity()).getReclamoDao();
 
         View v = inflater.inflate(R.layout.fragment_nuevo_reclamo, container, false);
@@ -58,8 +81,10 @@ public class NuevoReclamoFragment extends Fragment {
         tvCoord= (TextView) v.findViewById(R.id.reclamo_coord);
         buscarCoord= (Button) v.findViewById(R.id.btnBuscarCoordenadas);
         btnGuardar= (Button) v.findViewById(R.id.btnGuardar);
+        btnFotoReclamo = (Button) v.findViewById(R.id.btnFotoReclamo);
+        imgFotoReclamo = (ImageView) v.findViewById(R.id.imgFotoReclamo);
 
-        tipoReclamoAdapter = new ArrayAdapter<Reclamo.TipoReclamo>(getActivity(),android.R.layout.simple_spinner_item,Reclamo.TipoReclamo.values());
+        tipoReclamoAdapter = new ArrayAdapter<>(getActivity(),android.R.layout.simple_spinner_item,Reclamo.TipoReclamo.values());
         tipoReclamoAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         tipoReclamo.setAdapter(tipoReclamoAdapter);
 
@@ -76,12 +101,41 @@ public class NuevoReclamoFragment extends Fragment {
         mail.setEnabled(edicionActivada );
         tipoReclamo.setEnabled(edicionActivada);
         btnGuardar.setEnabled(edicionActivada);
+        btnFotoReclamo.setEnabled(edicionActivada);
+        imgFotoReclamo.setEnabled(edicionActivada);
 
         buscarCoord.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 listener.obtenerCoordenadas();
+            }
+        });
 
+        btnFotoReclamo.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+                if (i.resolveActivity(getActivity().getPackageManager()) != null) {
+                    File photoFile = null;
+                    try {
+                        photoFile = createImageFile();
+
+                    } catch(IOException e) {
+                        Log.e("LAB06", e.toString());
+                    }
+
+                    if (photoFile != null) {
+                        Uri photoURI = FileProvider.getUriForFile(
+                                getActivity(),
+                                "ar.edu.utn.frsf.isi.dam.laboratorio05.fileprovider",
+                                photoFile
+                        );
+
+                        i.putExtra(MediaStore.EXTRA_OUTPUT, photoURI);
+                        startActivityForResult(i, REQUEST_IMAGE_SAVE);
+                    }
+                }
             }
         });
 
@@ -150,6 +204,7 @@ public class NuevoReclamoFragment extends Fragment {
                         mail.setText(R.string.texto_vacio);
                         tvCoord.setText(R.string.texto_vacio);
                         reclamoDesc.setText(R.string.texto_vacio);
+                        imgFotoReclamo.setImageResource(0);
                         getActivity().getFragmentManager().popBackStack();
                     }
                 });
@@ -159,5 +214,29 @@ public class NuevoReclamoFragment extends Fragment {
         t1.start();
     }
 
+    private File createImageFile() throws IOException {
+        String  timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+        String imageFileName = "JPG_" + timeStamp + "_";
+        File dir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
 
+        File image =  File.createTempFile(
+                imageFileName,  /* prefix */
+                ".jpg",   /* suffix */
+                dir             /* directory */
+        );
+
+        pathFoto = image.getAbsolutePath();
+        return image;
+    }
+
+    @Override
+    public void onActivityResult (int requestCode, int resultCode, Intent data) {
+
+        if (requestCode == REQUEST_IMAGE_SAVE && resultCode == RESULT_OK) {
+            Log.d("LAB06", "picture taken, maybe");
+
+            Bitmap imageThumbnail = BitmapFactory.decodeFile(pathFoto);
+            imgFotoReclamo.setImageBitmap(imageThumbnail);
+        }
+    }
 }
