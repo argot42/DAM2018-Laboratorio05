@@ -17,6 +17,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -116,6 +117,28 @@ public class NuevoReclamoFragment extends Fragment {
         imgFotoReclamo.setEnabled(edicionActivada);
         btnAudioReclamo.setEnabled(edicionActivada);
         btnEscucharAudioReclamo.setEnabled(edicionActivada);
+
+        tipoReclamo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Reclamo.TipoReclamo claseReclamo = tipoReclamoAdapter.getItem(position);
+
+                switch (claseReclamo) {
+                    case VEREDAS:
+                    case CALLE_EN_MAL_ESTADO:
+                        if (pathFoto == null || pathFoto.equals("")) {
+                            btnGuardar.setEnabled(false);
+                        }
+
+                        break;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
         buscarCoord.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -364,6 +387,14 @@ public class NuevoReclamoFragment extends Fragment {
 
             Bitmap imageThumbnail = BitmapFactory.decodeFile(pathFoto);
             imgFotoReclamo.setImageBitmap(imageThumbnail);
+
+            switch(tipoReclamoAdapter.getItem(tipoReclamo.getSelectedItemPosition())) {
+                case VEREDAS:
+                case CALLE_EN_MAL_ESTADO:
+                    btnGuardar.setEnabled(true);
+
+                    break;
+            }
         }
     }
 
