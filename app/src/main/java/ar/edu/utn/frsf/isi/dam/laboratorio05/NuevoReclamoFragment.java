@@ -13,10 +13,13 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.FileProvider;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
@@ -116,6 +119,67 @@ public class NuevoReclamoFragment extends Fragment {
         imgFotoReclamo.setEnabled(edicionActivada);
         btnAudioReclamo.setEnabled(edicionActivada);
         btnEscucharAudioReclamo.setEnabled(edicionActivada);
+
+        reclamoDesc.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+                switch (tipoReclamoAdapter.getItem(tipoReclamo.getSelectedItemPosition())) {
+                    case VEREDAS:
+                    case CALLE_EN_MAL_ESTADO:
+                        break;
+
+                    default:
+                        if (s.length() >= 8) {
+                            btnGuardar.setEnabled(true);
+                        } else {
+                            btnGuardar.setEnabled(false);
+                        }
+                        break;
+                }
+            }
+        });
+
+        tipoReclamo.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                Reclamo.TipoReclamo claseReclamo = tipoReclamoAdapter.getItem(position);
+
+                Log.d("LAB06", claseReclamo.toString());
+
+                switch (claseReclamo) {
+                    case VEREDAS:
+                    case CALLE_EN_MAL_ESTADO:
+                        if (pathFoto == null || pathFoto.equals("")) {
+                            btnGuardar.setEnabled(false);
+                        }
+                        break;
+
+                    default:
+                        Log.d("LAB06", "pathAudio: " + pathAudio);
+
+                        if (reclamoDesc.getText().toString().length() < 8 && (pathAudio == null || pathAudio.isEmpty())) {
+                            btnGuardar.setEnabled(false);
+                        }
+
+                        break;
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
         buscarCoord.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -321,6 +385,8 @@ public class NuevoReclamoFragment extends Fragment {
         mRecorder.stop();
         mRecorder.release();
         mRecorder = null;
+
+        btnGuardar.setEnabled(true);
     }
 
     private String generateAudioFilename() {
@@ -364,6 +430,13 @@ public class NuevoReclamoFragment extends Fragment {
 
             Bitmap imageThumbnail = BitmapFactory.decodeFile(pathFoto);
             imgFotoReclamo.setImageBitmap(imageThumbnail);
+
+            switch(tipoReclamoAdapter.getItem(tipoReclamo.getSelectedItemPosition())) {
+                case VEREDAS:
+                case CALLE_EN_MAL_ESTADO:
+                    btnGuardar.setEnabled(true);
+                    break;
+            }
         }
     }
 
