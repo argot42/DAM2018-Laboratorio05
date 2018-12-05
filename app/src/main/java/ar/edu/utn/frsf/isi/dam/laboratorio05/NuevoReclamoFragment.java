@@ -142,7 +142,9 @@ public class NuevoReclamoFragment extends Fragment {
                         if (s.length() >= 8) {
                             btnGuardar.setEnabled(true);
                         } else {
-                            btnGuardar.setEnabled(false);
+                            if (pathAudio == null && pathAudio.isEmpty()) {
+                                btnGuardar.setEnabled(false);
+                            }
                         }
                         break;
                 }
@@ -196,7 +198,12 @@ public class NuevoReclamoFragment extends Fragment {
                 if (i.resolveActivity(getActivity().getPackageManager()) != null) {
                     File photoFile = null;
                     try {
-                        photoFile = createImageFile();
+                        photoFile = FilenameGenerator.imageFilename(
+                                getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES),
+                                "PICTURE_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + "_"
+                        );
+
+                        pathFoto = photoFile.getAbsolutePath();
 
                     } catch(IOException e) {
                         Log.e("LAB06", e.toString());
@@ -349,26 +356,21 @@ public class NuevoReclamoFragment extends Fragment {
         t1.start();
     }
 
-    private File createImageFile() throws IOException {
-        String  timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String imageFileName = "JPG_" + timeStamp + "_";
-        File dir = getActivity().getExternalFilesDir(Environment.DIRECTORY_PICTURES);
-
-        File image =  File.createTempFile(
-                imageFileName,  /* prefix */
-                ".jpg",   /* suffix */
-                dir             /* directory */
-        );
-
-        pathFoto = image.getAbsolutePath();
-        return image;
-    }
-
     private void startRecording() {
         mRecorder = new MediaRecorder();
         mRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
         mRecorder.setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP);
-        pathAudio = generateAudioFilename();
+
+        try {
+            pathAudio = FilenameGenerator.audioFilename(
+                    getActivity().getExternalFilesDir(Environment.DIRECTORY_MUSIC),
+                    "AUDIO_" + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + "_"
+            ).getAbsolutePath();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         mRecorder.setOutputFile(pathAudio);
         mRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB);
 
@@ -387,16 +389,6 @@ public class NuevoReclamoFragment extends Fragment {
         mRecorder = null;
 
         btnGuardar.setEnabled(true);
-    }
-
-    private String generateAudioFilename() {
-        String path = getActivity().getExternalCacheDir().getAbsolutePath();
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-        String suffix = ".3gp";
-
-        Log.d("LAB06", path + "/" + timeStamp + suffix);
-
-        return path + "/" + timeStamp + suffix;
     }
 
     private void startPlaying() {
